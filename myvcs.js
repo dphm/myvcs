@@ -9,14 +9,14 @@ if (!fs.existsSync(VCS)) fs.mkdirSync(VCS);
 
 function backup() {
   fs.mkdir(nextBackup());
-  fs.mkdir(path.join(nextBackup(), path.basename(CWD)));
-  cpContents(CWD, path.join(latestBackup(), path.basename(CWD)));
+  cpdir(CWD, latestBackup(), { cpTopLevel: true });
 }
 
 function checkout(n) {
   if (!n) throw new Error('Checkout number not provided');
+  var backup = path.join(CWD, VCS, n.toString(), path.basename(CWD));
   cleardir(CWD);
-  cpContents(path.join(CWD, VCS, n.toString(), path.basename(CWD)), path.join(CWD));
+  cpdir(backup, CWD);
 }
 
 /**
@@ -27,8 +27,14 @@ function cpFile(fIn, fOut) {
   fs.writeFileSync(fOut, data);
 }
 
-function cpContents(dIn, dOut) {
+function cpdir(dIn, dOut, options) {
+  options = options || {};
   console.log('Copying contents:', dIn);
+
+  if (options.cpTopLevel === true) {
+    var dOut = path.join(dOut, path.basename(dIn));
+    fs.mkdirSync(dOut);
+  }
 
   var ls = fs.readdirSync(dIn);
   ls.forEach(function(file) {
@@ -39,7 +45,7 @@ function cpContents(dIn, dOut) {
 
     if (stats.isDirectory()) {
       fs.mkdirSync(fOut);
-      cpContents(fIn, fOut);
+      cpdir(fIn, fOut);
     } else if (stats.isFile()) {
       console.log('Copying file:', fIn);
       cpFile(fIn, fOut);
@@ -51,6 +57,16 @@ function cpContents(dIn, dOut) {
  * Clearing directories
  */
 function cleardir(dir) {
+  function dirFn(filepath) { fs.rmdirSync(filepath); }
+  function fileFn(filepath) { fs.unlinkSync(filepath); }
+  traverseWith(dir, dirFn, fileFn, { post: true });
+}
+
+/**
+ * Traversing directory tree, applying dirFn and fileFn
+ */
+function traverseWith(dir, dirFn, fileFn, options) {
+  options = options || {};
   var ls = fs.readdirSync(dir);
 
   ls.forEach(function(file) {
@@ -59,15 +75,17 @@ function cleardir(dir) {
     var stats = fs.lstatSync(filepath);
 
     if (stats.isDirectory()) {
-      cleardir(filepath);
+      if (options.pre === true) {
+        dirFn(filepath);
+      }
+      traverseWith(filepath, dirFn, fileFn, options);
+      if (options.post === true) {
+        dirFn(filepath);
+      }
     } else if (stats.isFile()) {
-      fs.unlinkSync(filepath);
+      fileFn(filepath);
     }
   });
-
-  if (dir !== CWD) {
-    fs.rmdirSync(dir);
-  }
 }
 
 /**
