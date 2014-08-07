@@ -3,13 +3,22 @@ var path = require('path');
 
 var VCS = '.myvcs';
 var CWD = process.cwd();
+var HEAD = path.join(VCS, 'head');
 
 // Create VCS directory
-if (!fs.existsSync(VCS)) fs.mkdirSync(VCS);
+if (!fs.existsSync(VCS)) {
+  fs.mkdirSync(VCS);
+}
+
+// Create head file
+if (!fs.existsSync(HEAD)) {
+  fs.writeFileSync(HEAD, '');
+}
 
 function backup() {
   fs.mkdir(nextBackup());
   cpdir(CWD, latestBackup(), { cpTopLevel: true });
+  setHead(latestIndex());
 }
 
 function checkout(n) {
@@ -17,6 +26,13 @@ function checkout(n) {
   var backup = path.join(CWD, VCS, n.toString(), path.basename(CWD));
   cleardir(CWD);
   cpdir(backup, CWD);
+  setHead(n);
+}
+
+function current() {
+  var data = fs.readFileSync(HEAD, { encoding: 'utf8' });
+  console.log(data);
+  return data;
 }
 
 /**
@@ -107,6 +123,10 @@ function nextBackup() {
   return path.join(CWD, VCS, numBackups().toString());
 }
 
+function setHead(n) {
+  fs.writeFileSync(HEAD, n);
+}
+
 /**
  * Command line processing
  */
@@ -120,6 +140,9 @@ switch (args[0]) {
     break;
   case 'latest':
     checkout(latestIndex());
+    break;
+  case 'current':
+    current();
     break;
   case 'clear':
     cleardir(CWD);
