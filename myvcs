@@ -8,30 +8,43 @@ var CWD = process.cwd();
 var LOG = path.join(VCS, 'log');
 var HEAD = path.join(VCS, 'head');
 
-// Create VCS directory, head and log files
+// Creates VCS directory, head and log files
 if (!fs.existsSync(VCS)) {
   fs.mkdirSync(VCS);
   fs.writeFileSync(HEAD, '');
   fs.writeFileSync(LOG, '[]');
 }
 
+// Creates a new backup
 function backup(message) {
+  // Copy current directory into numbered VCS backup directory
   fs.mkdir(nextBackup());
   cpdir(CWD, latestBackup(), { cpTopLevel: true });
 
+  // Log backup creation with message
   message = message || '[No message]';
   writeLog(message);
+
+  // Set head to current backup
   setHead(latestIndex());
 }
 
+// Restores contents of current directory to that of backup n
 function checkout(n) {
   if (!n) throw new Error('Checkout number not provided');
+
+  // Get the path for backup n
   var backup = path.join(CWD, VCS, n.toString(), path.basename(CWD));
+
+  // Clear current directory and copy contents of the backup
   cleardir(CWD);
   cpdir(backup, CWD);
+
+  // Set head to current backup
   setHead(n);
 }
 
+// Returns the number of the current backup (head)
 function current() {
   var data = fs.readFileSync(HEAD, { encoding: 'utf8' });
   return data;
@@ -40,15 +53,19 @@ function current() {
 /**
  * Copying files and directories
  */
+
+// Copies a file
 function cpFile(fIn, fOut) {
   var data = fs.readFileSync(fIn, { encoding: 'utf8' });
   fs.writeFileSync(fOut, data);
 }
 
+// Copies a directory
 function cpdir(dIn, dOut, options) {
   options = options || {};
   console.log('Copying contents:', dIn);
 
+  // Copy the top level directory dIn to dOut
   if (options.cpTopLevel === true) {
     var dOut = path.join(dOut, path.basename(dIn));
     fs.mkdirSync(dOut);
@@ -56,12 +73,15 @@ function cpdir(dIn, dOut, options) {
 
   var ls = fs.readdirSync(dIn);
   ls.forEach(function(file) {
+    // Skip the VCS directory
     if (file === VCS) return;
+
     var fIn = path.join(dIn, file);
     var fOut = path.join(dOut, file);
     var stats = fs.lstatSync(fIn);
 
     if (stats.isDirectory()) {
+      // Recursively copy subdirectories
       fs.mkdirSync(fOut);
       cpdir(fIn, fOut);
     } else if (stats.isFile()) {
@@ -74,14 +94,18 @@ function cpdir(dIn, dOut, options) {
 /**
  * Logging backups
  */
+
+// Reads log file
 function readLog() {
   return fs.readFileSync(LOG, { encoding: 'utf8' });
 }
 
+// Parses log file
 function parseLog() {
   return JSON.parse(readLog());
 }
 
+// Writes backup information to log file with message
 function writeLog(message) {
   var data = {
     backup:  latestIndex(),
@@ -100,6 +124,7 @@ function appendLogTop(data) {
   fs.writeFileSync(LOG, JSON.stringify(json));
 }
 
+// Prints log
 function printLog() {
   var backupList = parseLog();
   for (var b in backupList) {
@@ -114,6 +139,7 @@ function printLog() {
 /**
  * Clearing directories
  */
+
 function cleardir(dir) {
   function dirFn(filepath) { fs.rmdirSync(filepath); }
   function fileFn(filepath) { fs.unlinkSync(filepath); }
@@ -123,6 +149,7 @@ function cleardir(dir) {
 /**
  * Traversing directory tree, applying dirFn and fileFn
  */
+
 function traverseWith(dir, dirFn, fileFn, options) {
   options = options || {};
   var ls = fs.readdirSync(dir);
@@ -149,6 +176,7 @@ function traverseWith(dir, dirFn, fileFn, options) {
 /**
  * Backup helpers
  */
+
 function latestIndex() {
   return fs.readdirSync(VCS).length - 2;
 }
@@ -168,6 +196,7 @@ function setHead(n) {
 /**
  * Command line processing
  */
+
 var args = process.argv.slice(2);
 switch (args[0]) {
   case 'backup':
