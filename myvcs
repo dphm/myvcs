@@ -115,13 +115,14 @@ function appendLogTop(data) {
 // Prints log
 function printLog() {
   var backupList = parseLog();
+  var backups = [];
   for (var b in backupList) {
     var backup  = 'Backup:  ' + backupList[b].backup;
     var date    = 'Date:    ' + backupList[b].date;
     var message = 'Message: ' + backupList[b].message;
-    console.log([backup, date, message].join('\n'));
-    console.log();
+    backups.push([backup, date, message].join('\n'));
   }
+  console.log(backups.join('\n\n'));
 }
 
 /**
