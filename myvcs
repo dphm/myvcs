@@ -49,6 +49,12 @@ function current() {
   return data;
 }
 
+function printLog() {
+  var data = fs.readFileSync(LOG, { encoding: 'utf8' });
+  console.log(data);
+  return data;
+}
+
 /**
  * Copying files and directories
  */
@@ -167,6 +173,9 @@ switch (args[0]) {
     break;
   case 'current':
     current();
+    break;
+  case 'log':
+    printLog();
     break;
   case 'clear':
     cleardir(CWD);
