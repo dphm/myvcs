@@ -20,16 +20,16 @@ if (!fs.existsSync(HEAD)) {
 
 // Create log file
 if (!fs.existsSync(LOG)) {
-  fs.writeFileSync(LOG, '');
+  fs.writeFileSync(LOG, '[]');
 }
 
 function backup(message) {
   fs.mkdir(nextBackup());
   cpdir(CWD, latestBackup(), { cpTopLevel: true });
-  setHead(latestIndex());
 
   message = message || '[No message]';
-  logMessage(message);
+  writeLog(message);
+  setHead(latestIndex());
 }
 
 function checkout(n) {
@@ -42,13 +42,6 @@ function checkout(n) {
 
 function current() {
   var data = fs.readFileSync(HEAD, { encoding: 'utf8' });
-  console.log(data);
-  return data;
-}
-
-function printLog() {
-  var data = fs.readFileSync(LOG, { encoding: 'utf8' });
-  console.log(data);
   return data;
 }
 
@@ -86,19 +79,43 @@ function cpdir(dIn, dOut, options) {
   });
 }
 
-function appendFileTop(file, data) {
-  var fileData = fs.readFileSync(file, { encoding: 'utf8' });
-  fs.writeFileSync(file, data + fileData);
-}
-
 /**
  * Logging backups
  */
-function logMessage(text) {
-  var backup = 'Backup: ' + latestIndex() + '\n';
-  var date = 'Date: ' + new Date() + '\n';
-  var message = backup + date + text + '\n\n';
-  appendFileTop(LOG, message);
+function readLog() {
+  return fs.readFileSync(LOG, { encoding: 'utf8' });
+}
+
+function parseLog() {
+  return JSON.parse(readLog());
+}
+
+function writeLog(message) {
+  var data = {
+    backup:  latestIndex(),
+    parent:  current(),
+    date:    new Date(),
+    message: message
+  };
+  appendLogTop(LOG, data);
+}
+
+function appendLogTop(file, data) {
+  var fileData = fs.readFileSync(file, { encoding: 'utf8' });
+  var json = JSON.parse(fileData);
+  json.unshift(data);
+  fs.writeFileSync(file, JSON.stringify(json));
+}
+
+function printLog() {
+  var backupList = parseLog();
+  for (var b in backupList) {
+    var backup  = 'Backup:  ' + backupList[b].backup;
+    var date    = 'Date:    ' + backupList[b].date;
+    var message = 'Message: ' + backupList[b].message;
+    console.log([backup, date, message].join('\n'));
+    console.log();
+  }
 }
 
 /**
@@ -171,7 +188,7 @@ switch (args[0]) {
     checkout(latestIndex());
     break;
   case 'current':
-    current();
+    console.log(current());
     break;
   case 'log':
     printLog();
