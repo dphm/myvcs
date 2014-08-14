@@ -8,18 +8,10 @@ var CWD = process.cwd();
 var LOG = path.join(VCS, 'log');
 var HEAD = path.join(VCS, 'head');
 
-// Create VCS directory
+// Create VCS directory, head and log files
 if (!fs.existsSync(VCS)) {
   fs.mkdirSync(VCS);
-}
-
-// Create head file
-if (!fs.existsSync(HEAD)) {
   fs.writeFileSync(HEAD, '');
-}
-
-// Create log file
-if (!fs.existsSync(LOG)) {
   fs.writeFileSync(LOG, '[]');
 }
 
