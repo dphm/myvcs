@@ -7,6 +7,15 @@ var VCS = '.myvcs';
 var CWD = process.cwd();
 var LOG = path.join(VCS, 'log');
 var HEAD = path.join(VCS, 'head');
+var USAGE = [
+  'Usage',
+  '=====',
+  'myvcs backup [-m <msg>] # Creates a new backup for current directory in .myvcs',
+  'myvcs checkout n        # Reverts current directory to backup .myvcs',
+  'myvcs latest            # Reverts current directory to latest backup',
+  'myvcs current           # Prints the number of the current backup',
+  'myvcs log               # Prints a list of backups and their creation dates and messages'
+].join('\n');
 
 // Creates VCS directory, head and log files
 if (!fs.existsSync(VCS)) {
@@ -216,5 +225,5 @@ switch (args[0]) {
     printLog();
     break;
   default:
-    throw new Error('Invalid command');
+    console.log(USAGE);
 }
