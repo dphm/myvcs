@@ -98,7 +98,9 @@ function appendFileTop(file, data) {
  * Logging backups
  */
 function logMessage(text) {
-  var message = 'Date: ' + new Date() + '\n' + text + '\n\n';
+  var backup = 'Backup: ' + latestIndex() + '\n';
+  var date = 'Date: ' + new Date() + '\n';
+  var message = backup + date + text + '\n\n';
   appendFileTop(LOG, message);
 }
 
