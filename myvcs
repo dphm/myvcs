@@ -28,11 +28,8 @@ function backup(message) {
   cpdir(CWD, latestBackup(), { cpTopLevel: true });
   setHead(latestIndex());
 
-  if (message) {
-    logMessage(message);
-  } else {
-    logMessage('');
-  }
+  message = message || '[No message]';
+  logMessage(message);
 }
 
 function checkout(n) {
