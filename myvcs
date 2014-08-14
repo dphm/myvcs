@@ -60,44 +60,23 @@ function current() {
 }
 
 /**
- * Copying files and directories
+ * Backup helpers
  */
 
-// Copies a file
-function cpFile(fIn, fOut) {
-  var data = fs.readFileSync(fIn, { encoding: 'utf8' });
-  fs.writeFileSync(fOut, data);
+function latestIndex() {
+  return fs.readdirSync(VCS).length - 2;
 }
 
-// Copies a directory
-function cpdir(dIn, dOut, options) {
-  options = options || {};
-  console.log('Copying contents:', dIn);
+function latestBackup() {
+  return path.join(CWD, VCS, latestIndex().toString());
+}
 
-  // Copy the top level directory dIn to dOut
-  if (options.cpTopLevel === true) {
-    var dOut = path.join(dOut, path.basename(dIn));
-    fs.mkdirSync(dOut);
-  }
+function nextBackup() {
+  return path.join(CWD, VCS, (latestIndex() + 1).toString());
+}
 
-  var ls = fs.readdirSync(dIn);
-  ls.forEach(function(file) {
-    // Skip the VCS directory
-    if (file === VCS) return;
-
-    var fIn = path.join(dIn, file);
-    var fOut = path.join(dOut, file);
-    var stats = fs.lstatSync(fIn);
-
-    if (stats.isDirectory()) {
-      // Recursively copy subdirectories
-      fs.mkdirSync(fOut);
-      cpdir(fIn, fOut);
-    } else if (stats.isFile()) {
-      console.log('Copying file:', fIn);
-      cpFile(fIn, fOut);
-    }
-  });
+function setHead(n) {
+  fs.writeFileSync(HEAD, n);
 }
 
 /**
@@ -146,6 +125,47 @@ function printLog() {
 }
 
 /**
+ * Copying files and directories
+ */
+
+// Copies a file
+function cpFile(fIn, fOut) {
+  var data = fs.readFileSync(fIn, { encoding: 'utf8' });
+  fs.writeFileSync(fOut, data);
+}
+
+// Copies a directory
+function cpdir(dIn, dOut, options) {
+  options = options || {};
+  console.log('Copying contents:', dIn);
+
+  // Copy the top level directory dIn to dOut
+  if (options.cpTopLevel === true) {
+    var dOut = path.join(dOut, path.basename(dIn));
+    fs.mkdirSync(dOut);
+  }
+
+  var ls = fs.readdirSync(dIn);
+  ls.forEach(function(file) {
+    // Skip the VCS directory
+    if (file === VCS) return;
+
+    var fIn = path.join(dIn, file);
+    var fOut = path.join(dOut, file);
+    var stats = fs.lstatSync(fIn);
+
+    if (stats.isDirectory()) {
+      // Recursively copy subdirectories
+      fs.mkdirSync(fOut);
+      cpdir(fIn, fOut);
+    } else if (stats.isFile()) {
+      console.log('Copying file:', fIn);
+      cpFile(fIn, fOut);
+    }
+  });
+}
+
+/**
  * Clearing directories
  */
 
@@ -180,26 +200,6 @@ function traverseWith(dir, dirFn, fileFn, options) {
       fileFn(filepath);
     }
   });
-}
-
-/**
- * Backup helpers
- */
-
-function latestIndex() {
-  return fs.readdirSync(VCS).length - 2;
-}
-
-function latestBackup() {
-  return path.join(CWD, VCS, latestIndex().toString());
-}
-
-function nextBackup() {
-  return path.join(CWD, VCS, (latestIndex() + 1).toString());
-}
-
-function setHead(n) {
-  fs.writeFileSync(HEAD, n);
 }
 
 /**
