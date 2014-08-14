@@ -23,10 +23,16 @@ if (!fs.existsSync(LOG)) {
   fs.writeFileSync(LOG, '');
 }
 
-function backup() {
+function backup(message) {
   fs.mkdir(nextBackup());
   cpdir(CWD, latestBackup(), { cpTopLevel: true });
   setHead(latestIndex());
+
+  if (message) {
+    logMessage(message);
+  } else {
+    logMessage('');
+  }
 }
 
 function checkout(n) {
@@ -75,6 +81,19 @@ function cpdir(dIn, dOut, options) {
       cpFile(fIn, fOut);
     }
   });
+}
+
+function appendFileTop(file, data) {
+  var fileData = fs.readFileSync(file, { encoding: 'utf8' });
+  fs.writeFileSync(file, data + fileData);
+}
+
+/**
+ * Logging backups
+ */
+function logMessage(text) {
+  var message = 'Date: ' + new Date() + '\n' + text + '\n\n';
+  appendFileTop(LOG, message);
 }
 
 /**
@@ -137,7 +156,8 @@ function setHead(n) {
 var args = process.argv.slice(2);
 switch (args[0]) {
   case 'backup':
-    backup();
+    var message = args[2];
+    backup(message);
     break;
   case 'checkout':
     checkout(args[1]);
