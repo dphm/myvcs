@@ -5,6 +5,7 @@ var path = require('path');
 
 var VCS = '.myvcs';
 var CWD = process.cwd();
+var LOG = path.join(VCS, 'log');
 var HEAD = path.join(VCS, 'head');
 
 // Create VCS directory
@@ -15,6 +16,11 @@ if (!fs.existsSync(VCS)) {
 // Create head file
 if (!fs.existsSync(HEAD)) {
   fs.writeFileSync(HEAD, '');
+}
+
+// Create log file
+if (!fs.existsSync(LOG)) {
+  fs.writeFileSync(LOG, '');
 }
 
 function backup() {
@@ -109,12 +115,8 @@ function traverseWith(dir, dirFn, fileFn, options) {
 /**
  * Backup helpers
  */
-function numBackups() {
-  return fs.readdirSync(VCS).length;
-}
-
 function latestIndex() {
-  return numBackups() - 1;
+  return fs.readdirSync(VCS).length - 2;
 }
 
 function latestBackup() {
@@ -122,7 +124,7 @@ function latestBackup() {
 }
 
 function nextBackup() {
-  return path.join(CWD, VCS, numBackups().toString());
+  return path.join(CWD, VCS, (latestIndex() + 1).toString());
 }
 
 function setHead(n) {
