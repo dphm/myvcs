@@ -185,4 +185,3 @@ switch (args[0]) {
   default:
     throw new Error('Invalid command');
 }
-
